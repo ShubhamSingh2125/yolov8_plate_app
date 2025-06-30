@@ -6,7 +6,6 @@ async function uploadImage() {
         return;
     }
 
-    // Read image into canvas
     const reader = new FileReader();
     reader.onload = async function (e) {
         const img = new Image();
@@ -17,35 +16,45 @@ async function uploadImage() {
             canvas.height = img.height;
             ctx.drawImage(img, 0, 0);
 
-            // Send to backend
             const formData = new FormData();
             formData.append("file", file);
 
-            const response = await fetch("/predict/", {
-                method: "POST",
-                body: formData
-            });
+            try {
+                const response = await fetch("/predict/", {
+                    method: "POST",
+                    body: formData
+                });
 
-            if (!response.ok) {
-                alert("Prediction failed.");
-                return;
+                if (!response.ok) {
+                    const err = await response.text();
+                    console.error("❌ Backend error:", err);
+                    alert("Prediction failed: " + err);
+                    return;
+                }
+
+                const result = await response.json();
+
+                const detections = result.detections;
+                if (!detections || detections.length === 0) {
+                    alert("✅ Prediction succeeded, but no objects detected.");
+                    return;
+                }
+
+                detections.forEach(det => {
+                    const [x1, y1, x2, y2] = det.bbox;
+                    ctx.strokeStyle = "red";
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                    ctx.font = "16px Arial";
+                    ctx.fillStyle = "red";
+                    ctx.fillText(`${det.class_name} (${(det.confidence * 100).toFixed(1)}%)`, x1, y1 - 5);
+                });
+
+                document.getElementById("results").innerText = `Detections: ${detections.length}`;
+            } catch (error) {
+                console.error("❌ Unexpected error:", error);
+                alert("Prediction failed due to an unexpected error.");
             }
-
-            const result = await response.json();
-            const detections = result.detections;
-
-            // Draw bounding boxes
-            detections.forEach(det => {
-                const [x1, y1, x2, y2] = det.bbox;
-                ctx.strokeStyle = "red";
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-                ctx.font = "16px Arial";
-                ctx.fillStyle = "red";
-                ctx.fillText(`${det.class_name} (${(det.confidence * 100).toFixed(1)}%)`, x1, y1 - 5);
-            });
-
-            document.getElementById("results").innerText = `Detections: ${detections.length}`;
         };
         img.src = e.target.result;
     };
