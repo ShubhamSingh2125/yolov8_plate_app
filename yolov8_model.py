@@ -3,8 +3,11 @@ import cv2
 import numpy as np
 
 # Load your trained model
-model_path = "C:/Users/KIIT0001/Desktop/PM/root/v2/runs/detect/train2/weights/best.pt"
-model = YOLO(model_path)
+#model_path = "C:/Users/KIIT0001/Desktop/PM/root/v2/runs/detect/train2/weights/best.pt"
+#model = YOLO(model_path)
+model = YOLO("best.pt")
+model_path = "best.pt"
+
 
 def predict_image(image_bytes: bytes):
     # Convert bytes to OpenCV image
