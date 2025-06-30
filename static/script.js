@@ -25,16 +25,22 @@ async function uploadImage() {
                     body: formData
                 });
 
-                if (!response.ok) {
-                    const err = await response.text();
-                    console.error("❌ Backend error:", err);
-                    alert("Prediction failed: " + err);
+                let result;
+                try {
+                    result = await response.json();  // 🔁 Safe single read
+                } catch (e) {
+                    console.error("❌ Failed to parse JSON:", e);
+                    alert("Prediction failed: Server sent invalid JSON.");
                     return;
                 }
 
-                const result = await response.json();
-                const detections = result.detections;
+                if (!response.ok || !result || result.error) {
+                    console.error("❌ Backend responded with error:", result?.error || "Unknown");
+                    alert("Prediction failed: " + (result?.error || "Server error."));
+                    return;
+                }
 
+                const detections = result.detections;
                 if (!detections || detections.length === 0) {
                     alert("✅ Prediction succeeded, but no objects detected.");
                     return;
@@ -50,7 +56,6 @@ async function uploadImage() {
                     ctx.fillText(`${det.class_name} (${(det.confidence * 100).toFixed(1)}%)`, x1, y1 - 5);
                 });
 
-                // Check if result div exists before updating it
                 const resultDiv = document.getElementById("results");
                 if (resultDiv) {
                     resultDiv.innerText = `Detections: ${detections.length}`;
@@ -58,7 +63,6 @@ async function uploadImage() {
 
             } catch (error) {
                 console.error("❌ Unexpected error during prediction:", error);
-                // Only alert if the image isn't already drawn
                 alert("Prediction failed due to an unexpected error.");
             }
         };
