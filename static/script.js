@@ -33,8 +33,8 @@ async function uploadImage() {
                 }
 
                 const result = await response.json();
-
                 const detections = result.detections;
+
                 if (!detections || detections.length === 0) {
                     alert("✅ Prediction succeeded, but no objects detected.");
                     return;
@@ -50,11 +50,20 @@ async function uploadImage() {
                     ctx.fillText(`${det.class_name} (${(det.confidence * 100).toFixed(1)}%)`, x1, y1 - 5);
                 });
 
-                document.getElementById("results").innerText = `Detections: ${detections.length}`;
+                // Check if result div exists before updating it
+                const resultDiv = document.getElementById("results");
+                if (resultDiv) {
+                    resultDiv.innerText = `Detections: ${detections.length}`;
+                }
+
             } catch (error) {
-                console.error("❌ Unexpected error:", error);
+                console.error("❌ Unexpected error during prediction:", error);
+                // Only alert if the image isn't already drawn
                 alert("Prediction failed due to an unexpected error.");
             }
+        };
+        img.onerror = () => {
+            alert("Image failed to load. Please try another file.");
         };
         img.src = e.target.result;
     };
