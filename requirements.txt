@@ -3,3 +3,4 @@ uvicorn
 ultralytics
 numpy
 opencv-python
+jinja2
